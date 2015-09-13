@@ -278,15 +278,12 @@ static inline int codec_video_es_init(codec_para_t *pcodec)
     }
 
     flags |= pcodec->noblock ? O_NONBLOCK : 0;
-    if(pcodec->video_type == VFORMAT_HEVC) {
-		printf("OPEN es hevc\n");
+    if(pcodec->am_sysinfo.format == VIDEO_DEC_FORMAT_HEVC) {
       handle = codec_h_open(CODEC_VIDEO_ES_HEVC_DEVICE, flags);
     }
     else {
-		CODEC_PRINT("OPEN es DEVICE\n");
       handle = codec_h_open(CODEC_VIDEO_ES_DEVICE, flags);
     }
-    
     if (handle < 0) {
         codec_r = system_error_to_codec_error(handle);
         print_error_msg(codec_r, errno, __FUNCTION__, __LINE__);
@@ -684,10 +681,10 @@ int codec_init(codec_para_t *pcodec)
         return -CODEC_ERROR_SET_BUFSIZE_FAILED;
     }
     ret = codec_h_control(pcodec->handle, AMSTREAM_IOC_PORT_INIT, 0);
-    if (ret != 0) {        
+    if (ret != 0) {
+
         return -CODEC_ERROR_INIT_FAILED;
     }
-    
     if (pcodec->has_audio) {
         arm_audio_info a_ainfo;
         memset(&a_ainfo,0,sizeof(arm_audio_info));
@@ -1718,34 +1715,6 @@ int codec_get_pcrscr(codec_para_t *pcodec)
 
     return pcrscr;
 }
-/* --------------------------------------------------------------------------*/
-/**
-* @brief  codec_get_scrstate  get audio video codec state
-*
-* @param[in]  pcodec  Pointer of codec parameter structure
-*
-* @param[in]  valid sys start time.
-*
-* @return     2 TSYNC_STAT_PCRSCR_SETUP_AUDIO; 1 TSYNC_STAT_PCRSCR_SETUP_VIDEO
-*                 0 TSYNC_STAT_PCRSCR_SETUP_NONE
-*/
-/* --------------------------------------------------------------------------*/
-unsigned int codec_get_scrstate(codec_para_t *pcodec, unsigned long *time)
-{
-    int ret;
-
-    if (pcodec->cntl_handle < 0) {
-        return -1;
-    }
-	
-    ret = ioctl(pcodec->cntl_handle, AMSTREAM_IOC_GET_SCR_STATE, time);
-    if (ret < 0) {
-		CODEC_PRINT("[%s] ioctl failed %d\n", __FUNCTION__, ret);
-        return ret;
-    }	
-	
-    return ret;
-}
 
 /* --------------------------------------------------------------------------*/
 /**
@@ -2306,9 +2275,4 @@ int codec_set_skip_bytes(codec_para_t* pcodec, unsigned int bytes)
 int codec_get_dsp_apts(codec_para_t* pcodec, unsigned int * apts)
 {
   return audio_get_pts(pcodec->adec_priv, apts);
-}
-/*add for gstreamer fast/slow forward*/
-int codec_set_video_playrate(codec_para_t* pcodec, int rate)
-{
-    return codec_h_control(pcodec->cntl_handle, AMSTREAM_IOC_SET_PLAYRATE, (unsigned long)rate);
 }
