@@ -22,5 +22,4 @@ typedef struct {
     int pause_flag;
     int wait_flag;
 } alsa_param_t;
-int dummy_alsa_control(char * id_string , long vol, int rw, long * value);
 #endif
